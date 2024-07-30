@@ -4,7 +4,6 @@ import { FastifyRequest } from 'fastify';
 export interface PostRequestBody {
   title: string;
   content: string;
-  authorId: string;
 }
 
 export interface PostRequest extends FastifyRequest {

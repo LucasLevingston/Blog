@@ -45,7 +45,12 @@ export const createPost = async (
   request: FastifyRequest<{ Body: PostRequestBody }>,
   reply: FastifyReply
 ) => {
-  const { title, content, authorId } = request.body;
+  const { title, content } = request.body;
+  const authorId = request.user?.id;
+
+  if (!authorId) {
+    return reply.status(401).send({ error: 'Unauthorized' });
+  }
   try {
     const post = await createPostService(title, content, authorId);
     reply.status(201).send(post);
