@@ -40,7 +40,7 @@ app.register(fastifySwaggerUi, {
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
-app.register(userRoutes, { prefix: '/user' });
+app.register(userRoutes);
 app.register(postRoutes, { prefix: '/posts' });
 
 app.listen({ host: 'localhost', port: 3000 }, (err, address) => {
