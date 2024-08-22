@@ -1,8 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-const SECRET_KEY = process.env.TOKEN_JWT;
-
+const SECRET_KEY = `${process.env.JWT_SECRET_KEY}`;
 if (!SECRET_KEY) {
   throw new Error('Not secret key');
 }

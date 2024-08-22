@@ -9,6 +9,10 @@ import {
   serializerCompiler,
   validatorCompiler,
 } from 'fastify-type-provider-zod';
+import 'dotenv/config';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = Fastify({ logger: false });
 

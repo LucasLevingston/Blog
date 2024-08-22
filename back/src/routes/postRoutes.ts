@@ -7,7 +7,6 @@ import {
   getPost,
   updatePost,
 } from '../controllers/postController';
-import { PostParams } from '../types/request';
 import { authenticate } from '../middleware/authMiddleware';
 
 export async function postRoutes(fastify: FastifyInstance) {
@@ -27,7 +26,7 @@ export async function postRoutes(fastify: FastifyInstance) {
         }),
         response: {
           201: z.object({
-            id: z.string().uuid(),
+            id: z.number(),
             title: z.string(),
             content: z.string(),
             authorId: z.string().uuid(),
@@ -42,7 +41,6 @@ export async function postRoutes(fastify: FastifyInstance) {
         },
       },
     },
-
     createPost
   );
 
@@ -57,13 +55,24 @@ export async function postRoutes(fastify: FastifyInstance) {
           content: z.string().max(1000),
         }),
         params: z.object({
-          id: z.string().uuid(),
+          id: z.number(),
         }),
         response: {
-          201: z.object({
+          200: z.object({
+            id: z.number(),
             title: z.string(),
             content: z.string(),
             authorId: z.string().uuid(),
+            updatedAt: z.string(),
+          }),
+          400: z.object({
+            error: z.string(),
+          }),
+          404: z.object({
+            error: z.string(),
+          }),
+          500: z.object({
+            error: z.string(),
           }),
         },
       },
@@ -71,37 +80,75 @@ export async function postRoutes(fastify: FastifyInstance) {
     updatePost
   );
 
-  fastify.get<{ Params: { id: string } }>(
-    '/',
+  fastify.get(
+    '/:id',
     {
       schema: {
         summary: 'Get post by id',
         tags: ['Posts'],
-      },
-    },
-    getAllPostsById
-  );
-
-  fastify.get<{ Params: PostParams }>(
-    '/:id',
-    {
-      schema: {
-        summary: 'Get post',
-        tags: ['Posts'],
         params: z.object({
-          eventId: z.string().uuid(),
+          id: z.number(),
         }),
+        response: {
+          200: z.object({
+            id: z.number(),
+            title: z.string(),
+            content: z.string(),
+            authorId: z.string().uuid(),
+            createdAt: z.string(),
+          }),
+          404: z.object({
+            error: z.string(),
+          }),
+        },
       },
     },
     getPost
+  );
+
+  fastify.get(
+    '/',
+    {
+      schema: {
+        summary: 'Get all posts',
+        tags: ['Posts'],
+        response: {
+          200: z.array(
+            z.object({
+              id: z.number(),
+              title: z.string(),
+              content: z.string(),
+              authorId: z.string().uuid(),
+              createdAt: z.string(),
+            })
+          ),
+          500: z.object({
+            error: z.string(),
+          }),
+        },
+      },
+    },
+    getAllPostsById
   );
 
   fastify.delete(
     '/:id',
     {
       schema: {
-        summary: 'Get post',
+        summary: 'Delete post',
         tags: ['Posts'],
+        params: z.object({
+          id: z.number(),
+        }),
+        response: {
+          204: z.object({}),
+          404: z.object({
+            error: z.string(),
+          }),
+          500: z.object({
+            error: z.string(),
+          }),
+        },
       },
     },
     deletePost

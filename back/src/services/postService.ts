@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../prismaClient';
 
 export const createPostService = async (
   title: string,
@@ -23,8 +21,11 @@ export const updatePostService = async (
   authorId: string
 ) => {
   const post = await prisma.post.findUnique({ where: { id } });
-  if (!post || post.authorId !== authorId) {
-    throw new Error('Post not found or not authorized');
+  if (!post) {
+    throw new Error('Post not found');
+  }
+  if (post.authorId !== authorId) {
+    throw new Error('Not authorized');
   }
   return await prisma.post.update({
     where: { id },
@@ -34,10 +35,13 @@ export const updatePostService = async (
 
 export const deletePostService = async (id: number, authorId: string) => {
   const post = await prisma.post.findUnique({ where: { id } });
-  if (!post || post.authorId !== authorId) {
-    throw new Error('Post not found or not authorized');
+  if (!post) {
+    throw new Error('Post not found');
   }
-  await prisma.post.delete({ where: { id } });
+  if (post.authorId !== authorId) {
+    throw new Error('Not authorized');
+  }
+  return await prisma.post.delete({ where: { id } });
 };
 
 export const getPostService = async (id: number) => {

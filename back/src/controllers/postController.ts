@@ -92,7 +92,7 @@ export const deletePost = async (
 
   try {
     await deletePostService(id, authorId);
-    reply.status(204).send(); // No content
+    reply.status(204).send();
   } catch (error) {
     reply.status(500).send({ error: error || 'Internal Server Error' });
   }
