@@ -1,39 +1,78 @@
-import { User } from '@prisma/client';
 import { comparePassword, generateToken, hashPassword } from '../utils/authUtils';
 import prisma from '../prismaClient';
+import { FastifyError } from 'fastify';
 
 export const createUserService = async (
   username: string,
   password: string,
   email: string
-): Promise<User> => {
+): Promise<{ id: string; username: string; email: string }> => {
   try {
     const hashedPassword = await hashPassword(password);
-    return await prisma.user.create({
+    const result = await prisma.user.create({
       data: {
         username,
         email,
         password: hashedPassword,
       },
     });
+    if (!result) {
+      throw new Error('Error on create user');
+    }
+    if (result) {
+      const user = {
+        id: result.id,
+        username: result.username,
+        email: result.email,
+      };
+      return user;
+    }
+    return result;
   } catch (error) {
     throw new Error('Error creating user');
   }
 };
 
 export const loginUserService = async (
-  username: string,
+  email: string,
   password: string
-): Promise<User | null> => {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { username },
-    });
+): Promise<{
+  user: { email: string; id: string; username: string };
+  token: string;
+} | null> => {
+  const user = await getByEmail(email);
 
-    return user;
-  } catch (error) {
-    throw new Error('Error during login');
+  if (!user) {
+    const error: FastifyError = {
+      statusCode: 404,
+      message: 'User not found',
+      name: 'NotFoundError',
+      code: 'USER_NOT_FOUND',
+    };
+    throw error;
   }
+
+  const isPasswordValid = await comparePassword(password, user.password);
+  if (!isPasswordValid) {
+    const error: FastifyError = {
+      statusCode: 401,
+      message: 'Invalid password',
+      name: 'UnauthorizedError',
+      code: 'INVALID_PASSWORD',
+    };
+    throw error;
+  }
+
+  const token = generateToken(user.id);
+
+  return {
+    user: {
+      email: user.email,
+      id: user.id,
+      username: user.username,
+    },
+    token,
+  };
 };
 
 export const getByUsername = async (username: string) => {
@@ -50,8 +89,13 @@ export const getByEmail = async (email: string) => {
 export const deleteUserService = async (id: string) => {
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user) {
-    throw new Error('Post not found');
+    const error: FastifyError = {
+      statusCode: 404,
+      message: 'User not found',
+      name: 'NotFoundError',
+      code: 'NOT_FOUND',
+    };
+    throw error;
   }
-
   return await prisma.user.delete({ where: { id } });
 };

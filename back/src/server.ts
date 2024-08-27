@@ -1,5 +1,4 @@
 import fastifyCors from '@fastify/cors';
-import Fastify from 'fastify';
 import { userRoutes } from './routes/userRoutes';
 import { postRoutes } from './routes/postRoutes';
 import fastifySwagger from '@fastify/swagger';
@@ -9,12 +8,12 @@ import {
   serializerCompiler,
   validatorCompiler,
 } from 'fastify-type-provider-zod';
-import 'dotenv/config';
 import dotenv from 'dotenv';
+import 'dotenv/config';
+import { app } from './app';
+import prisma from './prismaClient';
 
 dotenv.config();
-
-const app = Fastify({ logger: false });
 
 app.register(fastifyCors, {
   origin: '*',
@@ -43,7 +42,8 @@ app.setSerializerCompiler(serializerCompiler);
 app.register(userRoutes);
 app.register(postRoutes, { prefix: '/posts' });
 
-app.listen({ host: 'localhost', port: 3000 }, (err, address) => {
+app.listen({ host: 'localhost', port: 3000 }, async (err, address) => {
+  // await prisma.user.deleteMany();
   if (err) {
     console.error(err);
     process.exit(1);

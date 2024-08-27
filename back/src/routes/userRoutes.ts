@@ -1,9 +1,10 @@
 import { FastifyInstance } from 'fastify';
 import z from 'zod';
 import { deleteUser, loginUser, registerUser } from '../controllers/userController';
+import { ZodTypeProvider } from 'fastify-type-provider-zod';
 
-export async function userRoutes(fastify: FastifyInstance) {
-  fastify.post(
+export async function userRoutes(app: FastifyInstance) {
+  app.withTypeProvider().post(
     '/register',
     {
       schema: {
@@ -32,7 +33,8 @@ export async function userRoutes(fastify: FastifyInstance) {
     },
     registerUser
   );
-  fastify.post(
+
+  app.withTypeProvider<ZodTypeProvider>().post(
     '/login',
     {
       schema: {
@@ -41,7 +43,6 @@ export async function userRoutes(fastify: FastifyInstance) {
         tags: ['Users'],
         body: z.object({
           email: z.string().email('Invalid email address').optional(),
-          username: z.string().email('Invalid usermname').optional(),
           password: z.string().min(6, 'Password must be at least 6 characters long'),
         }),
         response: {
@@ -67,7 +68,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     },
     loginUser
   );
-  fastify.delete(
+  app.withTypeProvider<ZodTypeProvider>().delete(
     '/delete/:id',
     {
       schema: {

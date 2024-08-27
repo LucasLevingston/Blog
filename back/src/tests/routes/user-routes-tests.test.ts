@@ -1,88 +1,92 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { test, expect, beforeEach, afterEach, describe, vi } from 'vitest';
 import Fastify, { FastifyInstance } from 'fastify';
-import { userRoutes } from '../../routes/userRoutes'; // Ajuste o caminho conforme necessário
-import jwt from 'jsonwebtoken';
+import { userRoutes } from '../../routes/userRoutes';
+import request from 'supertest';
+import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
+import { hashPassword } from '../../utils/authUtils';
+import fastify from 'fastify';
 
-// Função para criar o servidor Fastify
-const buildServer = () => {
-  const fastify = Fastify();
-  fastify.register(userRoutes);
-  return fastify;
-};
+let app: FastifyInstance;
+let id: string;
 
-// Função para criar um token de autenticação
-const createAuthToken = (userId: string) => {
-  const secret = `${process.env.JWT_SECRET_KEY}`; // Substitua pelo seu segredo
-  return jwt.sign({ id: userId }, secret, { expiresIn: '1h' });
-};
+beforeEach(async () => {
+  app = fastify();
+  Promise.all([
+    app.register(userRoutes),
+    app.setValidatorCompiler(validatorCompiler),
+    app.setSerializerCompiler(serializerCompiler),
+  ]);
+  await app.ready();
+});
 
-describe('User Routes', () => {
-  let server: FastifyInstance;
-  let authToken: string;
-  let userId: string;
+afterEach(async () => {
+  vi.resetAllMocks();
+  await app.close();
+});
 
-  beforeAll(async () => {
-    server = buildServer();
-    await server.ready();
+describe('user routes', () => {
+  test('POST /register deve registrar um novo usuário', async () => {
+    const newUser = {
+      username: 'teste123',
+      email: 'test@test.com',
+      password: 'teste123',
+    };
 
-    // Criar um usuário para autenticação
-    const userResponse = await server.inject({
-      method: 'POST',
-      url: '/register',
-      payload: {
-        username: 'testuser',
-        password: 'password123',
-        email: 'test@example.com',
+    const userResponse = await request(app.server).post('/register').send(newUser);
+    id = userResponse.body.id;
+    expect(userResponse.status).toBe(201);
+    expect(userResponse.body).toEqual({
+      username: 'teste123',
+      email: 'test@test.com',
+      id: expect.any(String),
+    });
+  });
+
+  test('POST /register deve retornar erro 400 para dados inválidos', async () => {
+    const response = await request(app.server).post('/register').send({
+      username: 'testeuser',
+      email: 'invalid-email',
+      password: '123',
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      error: expect.any(String),
+    });
+  });
+
+  test('POST /login deve logar um usuário', async () => {
+    const response = await request(app.server).post('/login').send({
+      email: 'test@test.com',
+      password: 'teste123',
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      token: expect.any(String),
+      user: {
+        id: expect.any(String),
+        username: 'teste123',
+        email: 'test@test.com',
       },
     });
-
-    userId = JSON.parse(userResponse.payload).id;
-    authToken = createAuthToken(userId);
   });
 
-  afterAll(async () => {
-    await server.close();
+  test('DELETE /delete/:id deve deletar um usuário', async () => {
+    const response = await request(app.server).delete(`/delete/${id}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({});
   });
 
-  it('should register a user', async () => {
-    const response = await server.inject({
-      method: 'POST',
-      url: '/register',
-      payload: {
-        username: 'newuser',
-        password: 'password456',
-        email: 'new@example.com',
-      },
+  test('DELETE /delete/:id deve retornar erro 404 para usuário inexistente', async () => {
+    const response = await request(app.server).delete(
+      '/delete/00000000-0000-0000-0000-000000000000'
+    );
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({
+      error: expect.any(String),
     });
-
-    expect(response.statusCode).toBe(201);
-    expect(response.json()).toHaveProperty('username', 'newuser');
-  });
-
-  it('should login a user', async () => {
-    const response = await server.inject({
-      method: 'POST',
-      url: '/login',
-      payload: {
-        username: 'testuser',
-        password: 'password123',
-      },
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toHaveProperty('token');
-    expect(response.json().user).toHaveProperty('id');
-    expect(response.json().user).toHaveProperty('username', 'testuser');
-  });
-
-  it('should delete a user', async () => {
-    const response = await server.inject({
-      method: 'DELETE',
-      url: `/delete/${userId}`,
-      headers: { Authorization: `Bearer ${authToken}` },
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toHaveProperty('message', 'User deleted successfully');
   });
 });

@@ -30,37 +30,25 @@ export const registerUser = async (
 
 export const loginUser = async (
   request: FastifyRequest<{
-    Body: { password: string; username?: string; email?: string };
+    Body: { password: string; email: string };
   }>,
   reply: FastifyReply
 ) => {
-  const { username, email, password } = request.body;
+  const { email, password } = request.body;
 
   try {
-    let user;
-
-    if (email) {
-      user = await getByEmail(email);
-      if (!user) {
-        throw new Error('User not exists');
-      }
-    } else if (username) {
-      user = await getByUsername(username);
-      if (!user) {
-        throw new Error('User not exists');
-      }
-    } else {
-      return reply.status(400).send({ error: 'Username or email is required.' });
+    if (!email) {
+      return reply.status(400).send({ error: 'Email is required.' });
     }
 
-    if (user && (await comparePassword(password, user.password))) {
-      const success = { ...user, token: generateToken(user.id) };
-      return reply.status(200).send(success);
-    } else {
-      return reply.status(401).send({ error: 'Invalid credentials' });
+    const result = await loginUserService(email, password);
+
+    return reply.status(200).send(result);
+  } catch (error: any) {
+    if (error.statusCode) {
+      return reply.status(error.statusCode).send({ error: error.message });
     }
-  } catch (error) {
-    reply.status(500).send(error);
+    return reply.status(500).send({ error: 'Internal Server Error' });
   }
 };
 
@@ -70,12 +58,12 @@ export const deleteUser = async (
 ) => {
   const idUser = request.params.id;
   if (!idUser) {
-    throw new Error('Id');
+    throw new Error('Id not provided');
   }
   try {
     await deleteUserService(idUser);
-    reply.status(204).send();
+    reply.status(200).send();
   } catch (error) {
-    reply.status(501).send(error);
+    reply.status(404).send(error);
   }
 };
