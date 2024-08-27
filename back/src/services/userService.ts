@@ -19,15 +19,12 @@ export const createUserService = async (
     if (!result) {
       throw new Error('Error on create user');
     }
-    if (result) {
-      const user = {
-        id: result.id,
-        username: result.username,
-        email: result.email,
-      };
-      return user;
-    }
-    return result;
+    const user = {
+      id: result.id,
+      username: result.username,
+      email: result.email,
+    };
+    return user;
   } catch (error) {
     throw new Error('Error creating user');
   }
@@ -68,8 +65,8 @@ export const loginUserService = async (
   return {
     user: {
       email: user.email,
-      id: user.id,
       username: user.username,
+      id: user.id,
     },
     token,
   };

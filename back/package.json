@@ -9,7 +9,8 @@
     "test": "vitest",
     "dev": "tsx watch src/server.ts",
     "start": "tsx watch src/server.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "coverage": "vitest run --coverage"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +22,8 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20.14.11",
     "@types/supertest": "^6.0.2",
+    "@vitest/coverage-v8": "^2.0.5",
+    "@vitest/ui": "^2.0.5",
     "eslint": "^9.7.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",

@@ -3,11 +3,9 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import {
   createUserService,
   deleteUserService,
-  getByEmail,
   getByUsername,
   loginUserService,
 } from '../services/userService';
-import { comparePassword, generateToken } from '../utils/authUtils';
 
 export const registerUser = async (
   request: FastifyRequest<{

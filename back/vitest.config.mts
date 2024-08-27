@@ -6,6 +6,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     coverage: {
+      provider: 'v8',
+      include: ['src/**/*.ts'],
       reporter: ['text', 'json', 'html'],
       exclude: [
         'node_modules/',
@@ -14,6 +16,7 @@ export default defineConfig({
         'src/swagger.ts',
         'src/index.ts',
       ],
+      all: true,
     },
   },
 });
