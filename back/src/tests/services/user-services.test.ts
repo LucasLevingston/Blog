@@ -15,7 +15,7 @@ vi.mock('../../prismaClient', () => ({
     user: {
       create: vi.fn().mockResolvedValue({
         id: 'mock-id',
-        username: 'testuser',
+        username: 'testuserService',
         email: 'test@example.com',
         password: 'password123',
       }),
@@ -41,7 +41,7 @@ describe('User Service', () => {
   });
 
   const mockUser = {
-    username: 'testuser',
+    username: 'testuserService',
     email: 'test@example.com',
     password: 'password123',
   };

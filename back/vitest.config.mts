@@ -14,7 +14,7 @@ export default defineConfig({
         'dist/',
         'src/database.ts',
         'src/swagger.ts',
-        'src/index.ts',
+        'src/server.ts',
       ],
       all: true,
     },

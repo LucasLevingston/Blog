@@ -1,9 +1,8 @@
 import { test, expect, beforeEach, afterEach, describe, vi } from 'vitest';
-import Fastify, { FastifyInstance } from 'fastify';
+import { FastifyInstance } from 'fastify';
 import { userRoutes } from '../../routes/userRoutes';
 import request from 'supertest';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
-import { hashPassword } from '../../utils/authUtils';
 import fastify from 'fastify';
 
 let app: FastifyInstance;
@@ -23,21 +22,26 @@ afterEach(async () => {
   vi.resetAllMocks();
   await app.close();
 });
-
+const mockUser = {
+  username: 'testuserRoutes',
+  password: 'password123',
+  email: 'testRoutes@example.com',
+  id: 'mock-id',
+};
 describe('user routes', () => {
   test('POST /register deve registrar um novo usuário', async () => {
     const newUser = {
-      username: 'teste123',
-      email: 'test@test.com',
-      password: 'teste123',
+      username: mockUser.username,
+      email: mockUser.email,
+      password: mockUser.password,
     };
 
     const userResponse = await request(app.server).post('/register').send(newUser);
     id = userResponse.body.id;
     expect(userResponse.status).toBe(201);
     expect(userResponse.body).toEqual({
-      username: 'teste123',
-      email: 'test@test.com',
+      username: mockUser.username,
+      email: mockUser.email,
       id: expect.any(String),
     });
   });
@@ -46,7 +50,7 @@ describe('user routes', () => {
     const response = await request(app.server).post('/register').send({
       username: 'testeuser',
       email: 'invalid-email',
-      password: '123',
+      password: mockUser.password,
     });
 
     expect(response.status).toBe(400);
@@ -57,8 +61,8 @@ describe('user routes', () => {
 
   test('POST /login deve logar um usuário', async () => {
     const response = await request(app.server).post('/login').send({
-      email: 'test@test.com',
-      password: 'teste123',
+      email: mockUser.email,
+      password: mockUser.password,
     });
 
     expect(response.status).toBe(200);
@@ -66,8 +70,8 @@ describe('user routes', () => {
       token: expect.any(String),
       user: {
         id: expect.any(String),
-        username: 'teste123',
-        email: 'test@test.com',
+        username: mockUser.username,
+        email: mockUser.email,
       },
     });
   });

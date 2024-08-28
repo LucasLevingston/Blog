@@ -8,78 +8,53 @@ import {
 } from '../../services/userService';
 import { FastifyRequest, FastifyReply } from 'fastify';
 
-// Mocks
 vi.mock('../../services/userService');
 
-let id: string;
-
 describe('UserController', () => {
-  const mockReply = {
-    status: vi.fn().mockReturnThis(),
-    send: vi.fn().mockReturnThis(),
-  } as unknown as FastifyReply;
+  let mockReply: FastifyReply;
 
   beforeEach(() => {
+    mockReply = {
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    } as unknown as FastifyReply;
     vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    vi.resetAllMocks();
-  });
+  const mockUser = {
+    username: 'testuserController',
+    password: 'password123',
+    email: 'testController@example.com',
+    id: 'mock-id',
+  };
 
   describe('registerUser', () => {
     it('should register a new user successfully', async () => {
       (getByUsername as Mock).mockResolvedValue(null);
-      (createUserService as Mock).mockResolvedValue({
-        id: 'mock-id',
-        username: 'testuser',
-        email: 'test@example.com',
-      });
+      (createUserService as Mock).mockResolvedValue(mockUser);
 
       const mockRequest = {
-        body: {
-          username: 'testuser',
-          password: 'password123',
-          email: 'test@example.com',
-        },
-      } as FastifyRequest<{
-        Body: { username: string; password: string; email: string };
-      }>;
+        body: mockUser,
+      } as FastifyRequest<{ Body: typeof mockUser }>;
 
       await registerUser(mockRequest, mockReply);
 
-      // id = mockReply.send;
-
-      expect(getByUsername).toHaveBeenCalledWith('testuser');
+      expect(getByUsername).toHaveBeenCalledWith(mockUser.username);
       expect(createUserService).toHaveBeenCalledWith(
-        'testuser',
-        'password123',
-        'test@example.com'
+        mockUser.username,
+        mockUser.password,
+        mockUser.email
       );
       expect(mockReply.status).toHaveBeenCalledWith(201);
-      expect(mockReply.send).toHaveBeenCalledWith({
-        id: 'mock-id',
-        username: 'testuser',
-        email: 'test@example.com',
-      });
+      expect(mockReply.send).toHaveBeenCalledWith(mockUser);
     });
 
     it('should return 500 if user already exists', async () => {
-      (getByUsername as Mock).mockResolvedValue({
-        id: 'mock-id',
-        username: 'testuser',
-        email: 'test@example.com',
-      });
+      (getByUsername as Mock).mockResolvedValue(mockUser);
 
       const mockRequest = {
-        body: {
-          username: 'testuser',
-          password: 'password123',
-          email: 'test@example.com',
-        },
-      } as FastifyRequest<{
-        Body: { username: string; password: string; email: string };
-      }>;
+        body: mockUser,
+      } as FastifyRequest<{ Body: typeof mockUser }>;
 
       await registerUser(mockRequest, mockReply);
 
@@ -90,44 +65,34 @@ describe('UserController', () => {
 
   describe('loginUser', () => {
     it('should login a user successfully', async () => {
-      const mockUser = {
-        id: 'mock-id',
-        username: 'testuser',
-        email: 'test@example.com',
-      };
-
       (loginUserService as Mock).mockResolvedValue({
-        user: mockUser,
         token: 'mock-token',
+        user: mockUser,
       });
 
       const mockRequest = {
         body: {
-          email: 'test@example.com',
-          password: 'password123',
+          email: mockUser.email,
+          password: mockUser.password,
         },
-      } as FastifyRequest<{
-        Body: { email: string; password: string };
-      }>;
+      } as FastifyRequest<{ Body: { email: string; password: string } }>;
 
       await loginUser(mockRequest, mockReply);
 
-      expect(loginUserService).toHaveBeenCalledWith('test@example.com', 'password123');
+      expect(loginUserService).toHaveBeenCalledWith(mockUser.email, mockUser.password);
       expect(mockReply.status).toHaveBeenCalledWith(200);
       expect(mockReply.send).toHaveBeenCalledWith({
-        user: mockUser,
         token: 'mock-token',
+        user: mockUser,
       });
     });
 
     it('should return 400 if email is missing', async () => {
       const mockRequest = {
         body: {
-          password: 'password123',
+          password: mockUser.password,
         },
-      } as FastifyRequest<{
-        Body: { email: string; password: string };
-      }>;
+      } as FastifyRequest<{ Body: { email: string; password: string } }>;
 
       await loginUser(mockRequest, mockReply);
 
@@ -140,12 +105,10 @@ describe('UserController', () => {
 
       const mockRequest = {
         body: {
-          email: 'test@example.com',
-          password: 'password123',
+          email: mockUser.email,
+          password: mockUser.password,
         },
-      } as FastifyRequest<{
-        Body: { email: string; password: string };
-      }>;
+      } as FastifyRequest<{ Body: { email: string; password: string } }>;
 
       await loginUser(mockRequest, mockReply);
 
@@ -156,37 +119,35 @@ describe('UserController', () => {
 
   describe('deleteUser', () => {
     it('should delete a user successfully', async () => {
+      const id = 'mock-id'; // Defina um ID de mock
       (deleteUserService as Mock).mockResolvedValue(undefined);
 
       const mockRequest = {
         params: {
-          id: 'mock-id',
+          id,
         },
-      } as FastifyRequest<{
-        Params: { id: string };
-      }>;
+      } as FastifyRequest<{ Params: { id: string } }>;
 
       await deleteUser(mockRequest, mockReply);
 
-      expect(deleteUserService).toHaveBeenCalledWith('mock-id');
+      expect(deleteUserService).toHaveBeenCalledWith(id);
       expect(mockReply.status).toHaveBeenCalledWith(200);
       expect(mockReply.send).toHaveBeenCalledWith();
     });
 
     it('should return 404 if user is not found', async () => {
+      const id = mockUser.id; // Defina um ID de mock
       (deleteUserService as Mock).mockRejectedValue(new Error('User not found'));
 
       const mockRequest = {
         params: {
-          id: 'mock-id',
+          id,
         },
-      } as FastifyRequest<{
-        Params: { id: string };
-      }>;
+      } as FastifyRequest<{ Params: { id: string } }>;
 
       await deleteUser(mockRequest, mockReply);
 
-      expect(deleteUserService).toHaveBeenCalledWith('mock-id');
+      expect(deleteUserService).toHaveBeenCalledWith(id);
       expect(mockReply.status).toHaveBeenCalledWith(404);
       expect(mockReply.send).toHaveBeenCalledWith(expect.any(Error));
     });
