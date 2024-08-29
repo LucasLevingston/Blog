@@ -113,7 +113,7 @@ describe('UserController', () => {
       await loginUser(mockRequest, mockReply);
 
       expect(mockReply.status).toHaveBeenCalledWith(500);
-      expect(mockReply.send).toHaveBeenCalledWith({ error: 'Internal Server Error' });
+      expect(mockReply.send).toHaveBeenCalledWith(expect.any(Error));
     });
   });
 

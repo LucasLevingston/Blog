@@ -22,7 +22,6 @@ export async function postRoutes(fastify: FastifyInstance) {
         body: z.object({
           title: z.string().max(16, 'Title must be less than 16 characters'),
           content: z.string().max(1000, 'Content must be less than 1000 characters'),
-          authorId: z.string().uuid(),
         }),
         response: {
           201: z.object({
@@ -30,7 +29,6 @@ export async function postRoutes(fastify: FastifyInstance) {
             title: z.string(),
             content: z.string(),
             authorId: z.string().uuid(),
-            createdAt: z.string(),
           }),
           400: z.object({
             error: z.string(),

@@ -5,13 +5,17 @@ export const createPostService = async (
   content: string,
   authorId: string
 ) => {
-  return await prisma.post.create({
-    data: {
-      title,
-      content,
-      authorId,
-    },
-  });
+  try {
+    return await prisma.post.create({
+      data: {
+        title,
+        content,
+        authorId,
+      },
+    });
+  } catch {
+    throw new Error('Error on create post on database');
+  }
 };
 
 export const updatePostService = async (
@@ -51,7 +55,7 @@ export const getPostService = async (id: number) => {
 export const getAllPostsByIdService = async (authorId: string) => {
   const posts = await prisma.post.findMany({
     where: { authorId },
-    orderBy: { createdAt: 'asc' },
+    // orderBy: { createdAt: 'asc' },
   });
   return posts;
 };

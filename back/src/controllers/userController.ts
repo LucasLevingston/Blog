@@ -46,7 +46,7 @@ export const loginUser = async (
     if (error.statusCode) {
       return reply.status(error.statusCode).send({ error: error.message });
     }
-    return reply.status(500).send({ error: 'Internal Server Error' });
+    return reply.status(500).send(error);
   }
 };
 

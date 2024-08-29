@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 
 const SECRET_KEY = `${process.env.JWT_SECRET_KEY}`;
 if (!SECRET_KEY) {
@@ -21,6 +21,6 @@ export const generateToken = (userId: string): string => {
   return jwt.sign({ userId }, SECRET_KEY, { expiresIn: '1h' });
 };
 
-export const verifyToken = (token: string): any => {
+export const verifyToken = (token: string): string | JwtPayload => {
   return jwt.verify(token, SECRET_KEY);
 };

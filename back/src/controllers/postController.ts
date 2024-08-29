@@ -7,6 +7,7 @@ import {
   updatePostService,
 } from '../services/postService';
 import { PostRequestBody } from '../types/request';
+import { verifyToken } from '../utils/authUtils';
 
 interface PostParams {
   id: number;
@@ -18,7 +19,7 @@ export const getPost = async (
 ) => {
   const { id } = request.params;
   try {
-    const post = await getPostService(Number(id));
+    const post = await getPostService(id);
     reply.status(201).send(post);
   } catch (error) {
     reply.status(500).send(error);
@@ -42,19 +43,26 @@ export const getAllPostsById = async (
 };
 
 export const createPost = async (
-  request: FastifyRequest<{ Body: PostRequestBody }>,
+  request: FastifyRequest<{
+    Body: {
+      title: string;
+      content: string;
+    };
+  }>,
   reply: FastifyReply
 ) => {
   const { title, content } = request.body;
-  const authorId = request.user?.id;
+  const user = request.user;
 
-  if (!authorId) {
-    return reply.status(401).send({ error: 'Unauthorized' });
-  }
   try {
-    const post = await createPostService(title, content, authorId);
+    if (!user || !user.userId) {
+      return reply.status(400).send({ error: 'Author Id is required' });
+    }
+
+    const post = await createPostService(title, content, user.userId);
     reply.status(201).send(post);
   } catch (error) {
+    console.error('Error creating post:', error);
     reply.status(500).send(error);
   }
 };
@@ -65,10 +73,10 @@ export const updatePost = async (
 ) => {
   const { id } = request.params;
   const { title, content } = request.body;
-  const authorId = request.user?.id;
+  const authorId = request.user?.userId;
 
   if (!authorId) {
-    return reply.status(401).send({ error: 'Unauthorized' });
+    return reply.status(401).send({ error: 'Author Id is required' });
   }
 
   try {
@@ -84,7 +92,7 @@ export const deletePost = async (
   reply: FastifyReply
 ) => {
   const { id } = request.params;
-  const authorId = request.user?.id;
+  const authorId = request.user?.userId;
 
   if (!authorId) {
     return reply.status(401).send({ error: 'Unauthorized' });
