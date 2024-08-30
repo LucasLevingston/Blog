@@ -57,7 +57,7 @@ export const getPostService = async (id: number) => {
   }
 };
 
-export const getAllPostsByIdService = async (
+export const getAllPostsService = async (
   order: 'asc' | 'desc',
   userId: string | null
 ) => {

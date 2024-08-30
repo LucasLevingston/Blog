@@ -5,6 +5,7 @@ import { postRoutes } from '../../routes/postRoutes';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { userRoutes } from '../../routes/userRoutes';
 import { generateToken } from '../../utils/authUtils';
+import { Post } from '@prisma/client';
 
 // vi.mock('../middleware/authMiddleware', () => ({
 //   authenticate: (request: FastifyRequest, reply: FastifyReply) => {
@@ -214,60 +215,60 @@ describe('Post Routes', () => {
       expect(response.body).toEqual({ message: 'Unauthorized', success: false });
     });
 
-    // it('should return posts ordered by createdAt in descending order', async () => {
-    //   const response = await request(app.server)
-    //     .get('/posts?order=desc')
-    //     .set({ Authorization: `Bearer ${TOKEN}` });
+    it('should return posts ordered by createdAt in descending order', async () => {
+      const response = await request(app.server)
+        .get('/posts?order=desc')
+        .set({ Authorization: `Bearer ${TOKEN}` });
 
-    //   expect(response.status).toBe(200);
-    //   expect(response.body).toEqual(
-    //     expect.arrayContaining([
-    //       expect.objectContaining({
-    //         id: expect.any(Number),
-    //         title: expect.any(String),
-    //         content: expect.any(String),
-    //         authorId: expect.any(String),
-    //         createdAt: expect.any(String),
-    //       }),
-    //     ])
-    //   );
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: expect.any(Number),
+            title: expect.any(String),
+            content: expect.any(String),
+            authorId: expect.any(String),
+            createdAt: expect.any(String),
+          }),
+        ])
+      );
 
-    //   // Verifica se as postagens estão ordenadas corretamente
-    //   const timestamps = response.body.map((post) => new Date(post.createdAt).getTime());
-    //   const isOrderedDescending = timestamps.every(
-    //     (time, i) => i === 0 || time <= timestamps[i - 1]
-    //   );
-    //   expect(isOrderedDescending).toBe(true);
-    // });
+      // Verifica se as postagens estão ordenadas corretamente
+      const timestamps = response.body.map((post: Post) =>
+        new Date(post.createdAt).getTime()
+      );
+      const isOrderedDescending = timestamps.every(
+        (time: string, i: number) => i === 0 || time <= timestamps[i - 1]
+      );
+      expect(isOrderedDescending).toBe(true);
+    });
   });
 
-  // describe('DELETE /posts/:id', () => {
-  //   it('should delete an existing post', async () => {
-  //     (deletePostService as Mock).mockResolvedValue(undefined);
+  describe('DELETE /posts/:id', () => {
+    it('should delete an existing post', async () => {
+      const response = await request(app.server)
+        .delete(`/posts/${id}`)
+        .set({ Authorization: `Bearer ${TOKEN}` });
 
-  //     const response = await supertest(app.server)
-  //       .delete('/posts/1')
-  //       .set('Authorization', 'Bearer valid-token');
+      expect(response.status).toBe(204);
+      expect(response.body).toEqual({});
+    });
 
-  //     expect(response.status).toBe(204);
-  //     expect(response.body).toEqual({});
-  //   });
+    it('should return 404 if post not found', async () => {
+      const response = await request(app.server)
+        .delete('/posts/312312312312')
+        .set({ Authorization: `Bearer ${TOKEN}` });
 
-  //   it('should return 404 if post not found', async () => {
-  //     (deletePostService as Mock).mockRejectedValue(new Error('Post not found'));
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ error: 'Post not found' });
+    });
 
-  //     const response = await supertest(app.server)
-  //       .delete('/posts/1')
-  //       .set('Authorization', 'Bearer valid-token');
-
-  //     expect(response.status).toBe(404);
-  //     expect(response.body).toEqual({ error: 'Post not found' });
-  //   });
-
-  //   it('should return 401 if unauthorized', async () => {
-  //     const response = await supertest(app.server).delete(`/posts/${id}`);
-
-  //     expect(response.status).toBe(401);
-  //     expect(response.body).toEqual({ error: 'Unauthorized' });
-  //   });
+    it('should return 401 if unauthorized', async () => {
+      const response = await request(app.server)
+        .delete(`/posts/${id}`)
+        .set({ Authorization: `Bearer ${TOKEN}a` });
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({ message: 'Unauthorized', success: false });
+    });
+  });
 });

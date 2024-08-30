@@ -2,7 +2,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import {
   createPostService,
   deletePostService,
-  getAllPostsByIdService,
+  getAllPostsService,
   getPostService,
   updatePostService,
 } from '../services/postService';
@@ -28,22 +28,16 @@ export const getPost = async (
   }
 };
 
-export const getAllPostsById = async (
+export const getAllPosts = async (
   request: FastifyRequest<{
-    Params: { id: string };
     Querystring: { order: 'asc' | 'desc' };
   }>,
   reply: FastifyReply
 ) => {
-  // const { id } = request.params;
-  // if (!id) {
-  //   throw new Error('ID is required');
-  // }
   const { order } = request.query;
   const user = request.user;
-  console.log(order);
   try {
-    const posts = await getAllPostsByIdService(order, user ? user.userId : null);
+    const posts = await getAllPostsService(order, user ? user.userId : null);
     reply.status(200).send(posts);
   } catch (error) {
     reply.status(500).send(error);
@@ -108,19 +102,29 @@ export const updatePost = async (
 };
 
 export const deletePost = async (
-  request: FastifyRequest<{ Params: PostParams }>,
+  request: FastifyRequest<{ Params: { postId: string } }>,
   reply: FastifyReply
 ) => {
   const { postId } = request.params;
-  const authorId = request.user?.userId;
-
-  if (!authorId) {
-    return reply.status(401).send({ error: 'Unauthorized' });
-  }
+  const user = request.user;
 
   try {
-    await deletePostService(postId, authorId);
-    reply.status(204).send();
+    if (!user || !user.userId) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
+    if (!user.userId) {
+      return reply.status(401).send({ error: 'Unauthorized' });
+    }
+
+    const post = await getPostService(Number(postId));
+    if (!post) {
+      return reply.status(404).send({ error: 'Post not found' });
+    }
+    if (post.authorId != user.userId) {
+      return reply.status(401).send({ error: 'Unauthorized' });
+    }
+    const result = await deletePostService(Number(postId), user.userId);
+    reply.status(204).send(result);
   } catch (error) {
     reply.status(500).send({ error: error || 'Internal Server Error' });
   }

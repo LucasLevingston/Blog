@@ -3,7 +3,7 @@ import z from 'zod';
 import {
   createPost,
   deletePost,
-  getAllPostsById,
+  getAllPosts,
   getPost,
   updatePost,
 } from '../controllers/postController';
@@ -130,17 +130,17 @@ export async function postRoutes(fastify: FastifyInstance) {
         },
       },
     },
-    getAllPostsById
+    getAllPosts
   );
 
   fastify.delete(
-    '/:id',
+    '/:postId',
     {
       schema: {
         summary: 'Delete post',
         tags: ['Posts'],
         params: z.object({
-          id: z.number(),
+          postId: z.string(),
         }),
         response: {
           204: z.object({}),
