@@ -45,7 +45,7 @@ app.register(postRoutes, { prefix: '/posts' });
 app.listen({ host: 'localhost', port: 3000 }, async (err, address) => {
   // await prisma.user.deleteMany();
   if (err) {
-    console.error(err);
+    // console.error(err);
     process.exit(1);
   }
   console.log(`Server listening at ${address}`);

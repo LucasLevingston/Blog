@@ -7,19 +7,21 @@ import {
   updatePostService,
 } from '../services/postService';
 import { PostRequestBody } from '../types/request';
-import { verifyToken } from '../utils/authUtils';
 
 interface PostParams {
-  id: number;
+  postId: number;
 }
 
 export const getPost = async (
   request: FastifyRequest<{ Params: PostParams }>,
   reply: FastifyReply
 ) => {
-  const { id } = request.params;
+  const { postId } = request.params;
   try {
-    const post = await getPostService(id);
+    const post = await getPostService(Number(postId));
+    if (!post) {
+      reply.status(404).send({ error: 'Post not found' });
+    }
     reply.status(201).send(post);
   } catch (error) {
     reply.status(500).send(error);
@@ -27,16 +29,22 @@ export const getPost = async (
 };
 
 export const getAllPostsById = async (
-  request: FastifyRequest<{ Params: { id: string } }>,
+  request: FastifyRequest<{
+    Params: { id: string };
+    Querystring: { order: 'asc' | 'desc' };
+  }>,
   reply: FastifyReply
 ) => {
-  const { id } = request.params;
-  if (!id) {
-    throw new Error('ID is required');
-  }
+  // const { id } = request.params;
+  // if (!id) {
+  //   throw new Error('ID is required');
+  // }
+  const { order } = request.query;
+  const user = request.user;
+  console.log(order);
   try {
-    const post = await getAllPostsByIdService(id);
-    reply.status(201).send(post);
+    const posts = await getAllPostsByIdService(order, user ? user.userId : null);
+    reply.status(200).send(posts);
   } catch (error) {
     reply.status(500).send(error);
   }
@@ -62,28 +70,40 @@ export const createPost = async (
     const post = await createPostService(title, content, user.userId);
     reply.status(201).send(post);
   } catch (error) {
-    console.error('Error creating post:', error);
     reply.status(500).send(error);
   }
 };
 
 export const updatePost = async (
-  request: FastifyRequest<{ Params: PostParams; Body: PostRequestBody }>,
+  request: FastifyRequest<{
+    Params: { postId: string };
+    Body: PostRequestBody;
+  }>,
   reply: FastifyReply
 ) => {
-  const { id } = request.params;
+  const { postId } = request.params;
   const { title, content } = request.body;
-  const authorId = request.user?.userId;
-
-  if (!authorId) {
-    return reply.status(401).send({ error: 'Author Id is required' });
-  }
+  const user = request.user;
 
   try {
-    const post = await updatePostService(id, title, content, authorId);
-    reply.status(200).send(post);
+    if (!user || !user.userId) {
+      return reply.status(401).send({ error: 'User not authenticated' });
+    }
+
+    const post = await getPostService(Number(postId));
+    if (!post) {
+      return reply.status(404).send({ error: 'Post not found' });
+    }
+
+    const updatedPost = await updatePostService(
+      Number(postId),
+      title,
+      content,
+      user.userId
+    );
+    return reply.status(200).send(updatedPost);
   } catch (error) {
-    reply.status(500).send({ error: error || 'Internal Server Error' });
+    return reply.status(500).send({ error: 'Internal Server Error' });
   }
 };
 
@@ -91,7 +111,7 @@ export const deletePost = async (
   request: FastifyRequest<{ Params: PostParams }>,
   reply: FastifyReply
 ) => {
-  const { id } = request.params;
+  const { postId } = request.params;
   const authorId = request.user?.userId;
 
   if (!authorId) {
@@ -99,7 +119,7 @@ export const deletePost = async (
   }
 
   try {
-    await deletePostService(id, authorId);
+    await deletePostService(postId, authorId);
     reply.status(204).send();
   } catch (error) {
     reply.status(500).send({ error: error || 'Internal Server Error' });

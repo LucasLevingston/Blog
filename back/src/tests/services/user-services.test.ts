@@ -61,7 +61,6 @@ describe('User Service', () => {
       mockUser.password,
       mockUser.email
     );
-    console.log(result.id);
     expect(result).toEqual({
       id: 'mock-id',
       username: mockUser.username,

@@ -29,6 +29,7 @@ export async function postRoutes(fastify: FastifyInstance) {
             title: z.string(),
             content: z.string(),
             authorId: z.string().uuid(),
+            createdAt: z.date(),
           }),
           400: z.object({
             error: z.string(),
@@ -43,7 +44,7 @@ export async function postRoutes(fastify: FastifyInstance) {
   );
 
   fastify.put(
-    '/:id',
+    '/:postId',
     {
       schema: {
         summary: 'Update post',
@@ -53,7 +54,7 @@ export async function postRoutes(fastify: FastifyInstance) {
           content: z.string().max(1000),
         }),
         params: z.object({
-          id: z.number(),
+          postId: z.string(),
         }),
         response: {
           200: z.object({
@@ -61,7 +62,7 @@ export async function postRoutes(fastify: FastifyInstance) {
             title: z.string(),
             content: z.string(),
             authorId: z.string().uuid(),
-            updatedAt: z.string(),
+            createdAt: z.date(),
           }),
           400: z.object({
             error: z.string(),
@@ -79,13 +80,13 @@ export async function postRoutes(fastify: FastifyInstance) {
   );
 
   fastify.get(
-    '/:id',
+    '/:postId',
     {
       schema: {
         summary: 'Get post by id',
         tags: ['Posts'],
         params: z.object({
-          id: z.number(),
+          postId: z.string(),
         }),
         response: {
           200: z.object({
@@ -93,7 +94,7 @@ export async function postRoutes(fastify: FastifyInstance) {
             title: z.string(),
             content: z.string(),
             authorId: z.string().uuid(),
-            createdAt: z.string(),
+            createdAt: z.date(),
           }),
           404: z.object({
             error: z.string(),
@@ -110,6 +111,9 @@ export async function postRoutes(fastify: FastifyInstance) {
       schema: {
         summary: 'Get all posts',
         tags: ['Posts'],
+        querystring: z.object({
+          order: z.enum(['asc', 'desc']).default('desc').optional(),
+        }),
         response: {
           200: z.array(
             z.object({
@@ -117,7 +121,7 @@ export async function postRoutes(fastify: FastifyInstance) {
               title: z.string(),
               content: z.string(),
               authorId: z.string().uuid(),
-              createdAt: z.string(),
+              createdAt: z.date(),
             })
           ),
           500: z.object({

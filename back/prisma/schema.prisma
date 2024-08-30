@@ -16,9 +16,10 @@ model User {
 }
 
 model Post {
-  id       Int    @id @default(autoincrement())
-  title    String
-  content  String
-  authorId String
-  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }

@@ -24,13 +24,12 @@ export const updatePostService = async (
   content: string,
   authorId: string
 ) => {
-  const post = await prisma.post.findUnique({ where: { id } });
-  if (!post) {
-    throw new Error('Post not found');
-  }
-  if (post.authorId !== authorId) {
+  const post = await getPostService(id);
+
+  if (post?.authorId !== authorId) {
     throw new Error('Not authorized');
   }
+
   return await prisma.post.update({
     where: { id },
     data: { title, content },
@@ -49,13 +48,23 @@ export const deletePostService = async (id: number, authorId: string) => {
 };
 
 export const getPostService = async (id: number) => {
-  return await prisma.post.findUnique({ where: { id } });
+  try {
+    const post = await prisma.post.findUnique({ where: { id } });
+    return post;
+  } catch (error) {
+    console.error('Error fetching post:', error);
+    throw new Error('Database error occurred');
+  }
 };
 
-export const getAllPostsByIdService = async (authorId: string) => {
+export const getAllPostsByIdService = async (
+  order: 'asc' | 'desc',
+  userId: string | null
+) => {
+  const whereClause = userId ? { authorId: userId } : {};
   const posts = await prisma.post.findMany({
-    where: { authorId },
-    // orderBy: { createdAt: 'asc' },
+    where: whereClause,
+    orderBy: { createdAt: order === 'asc' ? 'asc' : 'desc' },
   });
   return posts;
 };
