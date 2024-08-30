@@ -7,6 +7,8 @@ import {
   updatePostService,
 } from '../services/postService';
 import { PostRequestBody } from '../types/request';
+import { authenticate } from '../middleware/authMiddleware';
+import { getById } from '../services/userService';
 
 interface PostParams {
   postId: number;
@@ -53,18 +55,22 @@ export const createPost = async (
   }>,
   reply: FastifyReply
 ) => {
-  const { title, content } = request.body;
-  const user = request.user;
-
   try {
-    if (!user || !user.userId) {
-      return reply.status(400).send({ error: 'Author Id is required' });
+    await authenticate(request, reply);
+
+    if (!request.user) {
+      return reply.status(400).send({ error: 'Token error' });
+    }
+    const user = await getById(request.user.userId);
+    if (!user) {
+      return reply.status(400).send({ error: 'Error on get user by id' });
     }
 
-    const post = await createPostService(title, content, user.userId);
+    const { title, content } = request.body;
+    const post = await createPostService(title, content, user.id);
     reply.status(201).send(post);
   } catch (error) {
-    reply.status(500).send(error);
+    reply.status(500).send({ error });
   }
 };
 
@@ -77,24 +83,26 @@ export const updatePost = async (
 ) => {
   const { postId } = request.params;
   const { title, content } = request.body;
-  const user = request.user;
 
   try {
-    if (!user || !user.userId) {
-      return reply.status(401).send({ error: 'User not authenticated' });
+    await authenticate(request, reply);
+
+    if (!request.user) {
+      return reply.status(400).send({ error: 'Token error' });
+    }
+    const user = await getById(request.user.userId);
+    if (!user) {
+      return reply.status(400).send({ error: 'Error on get user by id' });
     }
 
     const post = await getPostService(Number(postId));
     if (!post) {
       return reply.status(404).send({ error: 'Post not found' });
     }
-
-    const updatedPost = await updatePostService(
-      Number(postId),
-      title,
-      content,
-      user.userId
-    );
+    if (post.authorId !== user.id) {
+      return reply.status(401).send({ error: 'Unauthorized' });
+    }
+    const updatedPost = await updatePostService(Number(postId), title, content, user.id);
     return reply.status(200).send(updatedPost);
   } catch (error) {
     return reply.status(500).send({ error: 'Internal Server Error' });
@@ -106,24 +114,26 @@ export const deletePost = async (
   reply: FastifyReply
 ) => {
   const { postId } = request.params;
-  const user = request.user;
 
   try {
-    if (!user || !user.userId) {
-      return reply.status(401).send({ error: 'User not authenticated' });
+    await authenticate(request, reply);
+
+    if (!request.user) {
+      return reply.status(400).send({ error: 'Token error' });
     }
-    if (!user.userId) {
-      return reply.status(401).send({ error: 'Unauthorized' });
+    const user = await getById(request.user.userId);
+    if (!user) {
+      return reply.status(400).send({ error: 'Error on get user by id' });
     }
 
     const post = await getPostService(Number(postId));
     if (!post) {
       return reply.status(404).send({ error: 'Post not found' });
     }
-    if (post.authorId != user.userId) {
+    if (post.authorId != user.id) {
       return reply.status(401).send({ error: 'Unauthorized' });
     }
-    const result = await deletePostService(Number(postId), user.userId);
+    const result = await deletePostService(Number(postId), user.id);
     reply.status(204).send(result);
   } catch (error) {
     reply.status(500).send({ error: error || 'Internal Server Error' });

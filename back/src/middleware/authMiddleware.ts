@@ -19,6 +19,10 @@ export const authenticate = async (request: FastifyRequest, reply: FastifyReply)
 
     try {
       const decoded = verifyToken(token) as { userId: string };
+      // Verifica se a decodificação foi bem-sucedida
+      if (!decoded || !decoded.userId) {
+        throw new Error('Invalid token');
+      }
       request.user = decoded;
     } catch (error) {
       return reply.code(401).send({ success: false, message: 'Unauthorized' });
