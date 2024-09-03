@@ -61,10 +61,11 @@ export const getAllPostsService = async (
   order: 'asc' | 'desc',
   userId: string | null
 ) => {
-  const whereClause = userId ? { authorId: userId } : {};
+  // const whereClause = userId ? { authorId: userId } : {};
   const posts = await prisma.post.findMany({
-    where: whereClause,
+    // where: whereClause,
     orderBy: { createdAt: order === 'asc' ? 'asc' : 'desc' },
   });
+  console.log(posts);
   return posts;
 };

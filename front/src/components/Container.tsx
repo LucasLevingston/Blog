@@ -11,7 +11,7 @@ export default function Container({ children, className }: ContainerProps): JSX.
       className={`flex-1 bg-mainTextColor 
         p-6  sm:p-[50px] ${className}`}
     >
-      <div className="">{children}</div>
+      <div className="h-full">{children}</div>
     </div>
   );
 }

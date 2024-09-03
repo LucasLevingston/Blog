@@ -12,8 +12,11 @@
     "moduleResolution": "Node16",
     "resolveJsonModule": true,
     "allowImportingTsExtensions":true ,
-    "noEmit": true 
-
+    "noEmit": true ,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src/**/*", "vite-env.d.ts"], // Inclua aqui
   "exclude": ["node_modules", "dist"]

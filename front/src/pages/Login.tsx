@@ -1,37 +1,64 @@
-// Login.tsx
-import React from 'react';
-import { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Header from '../components/Header.tsx';
 import Container from '../components/Container.tsx';
-import { loginUser } from '../hooks/useUserStore.ts';
-import { useUserStore } from '../hooks/user.store.ts';
+import { useUser } from '../hooks/use-user.ts';
 
 export default function Login() {
   const [active, setActive] = useState('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const user = useUserStore((state) => state.user);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    username: '',
+  });
 
-  const onLoginSubmit = (event: React.FormEvent) => {
-    // event.preventDefault(); // Previne o comportamento padrão do formulário
-    const result = loginUser({ email, password });
-    console.log(result); // Adicione um log para verificar o resultado
+  const user = useUser((state) => state.user);
+  const { login, register } = useUser();
+  useEffect(() => {
+    if (user) {
+      window.location.href = '/';
+    }
+  });
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const onRegisterSubmit = (event: React.FormEvent) => {
-    event.preventDefault(); // Previne o comportamento padrão do formulário
-    // const result = registerUser({ email, password, name });
-    // console.log(result); // Adicione um log para verificar o resultado
+  const onLoginSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const result = await login({ email: formData.email, password: formData.password });
+    if (!result) {
+      console.error('Login failed');
+      throw new Error('Error');
+    }
+    // window.location.href = '/';
+  };
+
+  const onRegisterSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const result = await register({
+      email: formData.email,
+      password: formData.password,
+      username: formData.username,
+    });
+    if (!result) {
+      console.error('Register failed');
+      throw new Error('Error');
+    }
+    // window.location.href = '/';
   };
 
   return (
-    <div>
+    <div className="flex flex-col h-screen">
       <Header />
       {!user && (
         <Container>
-          <div className="flex items-center justify-center flex-col h-screen">
-            <div className="bg-white rounded-lg shadow-lg border-[2px] overflow-hidden relative w-[768px] max-w-full min-h-[480px]">
+          <div className="flex items-center justify-center flex-col">
+            <div className="bg-white rounded-lg shadow-lg border-[2px] border-gray overflow-hidden relative w-[768px] max-w-full min-h-[480px]">
+              {/* Formulário de Cadastro */}
               <div
                 className={`absolute top-0 right-0 w-1/2 h-full p-10 transition-transform duration-600 ${active === 'cadastrar' ? 'opacity-100 z-10' : 'opacity-0 z-1'}`}
               >
@@ -41,54 +68,35 @@ export default function Login() {
                     onSubmit={onRegisterSubmit}
                   >
                     <h1 className="text-4xl font-bold">Criar conta</h1>
-                    <div className="mt-5 mb-5 flex">
-                      <a
-                        href="#"
-                        className="border border-gray-300 rounded-xl flex justify-center items-center mx-1 w-10 h-10"
-                      >
-                        i
-                      </a>
-                      <a
-                        href="#"
-                        className="border border-gray-300 rounded-xl flex justify-center items-center mx-1 w-10 h-10"
-                      >
-                        i
-                      </a>
-                      <a
-                        href="#"
-                        className="border border-gray-300 rounded-xl flex justify-center items-center mx-1 w-10 h-10"
-                      >
-                        i
-                      </a>
-                      <a
-                        href="#"
-                        className="border border-gray-300 rounded-xl flex justify-center items-center mx-1 w-10 h-10"
-                      >
-                        i
-                      </a>
-                    </div>
                     <span className="text-sm">ou use seu email e senha</span>
                     <input
                       className="bg-gray border-none my-2 py-2 px-3 text-sm rounded-lg w-full outline-none"
                       type="text"
-                      placeholder="Nome"
+                      name="username"
+                      placeholder="Nome de usuário"
+                      value={formData.username}
+                      onChange={handleChange}
                     />
                     <input
                       className="bg-gray border-none my-2 py-2 px-3 text-sm rounded-lg w-full outline-none"
                       type="email"
+                      name="email"
                       placeholder="Email de cadastro"
-                      aria-label="Email de cadastro"
+                      value={formData.email}
+                      onChange={handleChange}
                     />
                     <input
                       className="bg-gray border-none my-2 py-2 px-3 text-sm rounded-lg w-full outline-none"
                       type="password"
+                      name="password"
                       placeholder="Senha de cadastro"
-                      aria-label="Senha de cadastro"
+                      value={formData.password}
+                      onChange={handleChange}
                     />
                     <button
                       data-testid="cadastro-submit"
                       type="submit"
-                      className="bg-transparent border border-gray text-black text-sm font-semibold  px-4 py-2 rounded-lg mt-4"
+                      className="bg-transparent border border-gray text-black text-sm font-semibold px-4 py-2 rounded-lg mt-4"
                       aria-label="Submit Cadastro"
                     >
                       Cadastrar
@@ -96,8 +104,10 @@ export default function Login() {
                   </form>
                 )}
               </div>
+
+              {/* Formulário de Login */}
               <div
-                className={`absolute top-0 left-0 w-1/2 h-full p-10 transition-all  duration-600 ${active === 'login' ? 'opacity-100 z-10' : 'opacity-0 z-1'}`}
+                className={`absolute top-0 left-0 w-1/2 h-full p-10 transition-all duration-600 ${active === 'login' ? 'opacity-100 z-10' : 'opacity-0 z-1'}`}
               >
                 {active === 'login' && (
                   <form
@@ -105,51 +115,29 @@ export default function Login() {
                     onSubmit={onLoginSubmit}
                   >
                     <h1 className="text-4xl font-bold">Login</h1>
-                    <div className="mt-5 mb-5 flex">
-                      <a
-                        href="#"
-                        className="border border-gray-300 rounded-xl flex justify-center items-center mx-1 w-10 h-10"
-                      >
-                        i
-                      </a>
-                      <a
-                        href="#"
-                        className="border border-gray-300 rounded-xl flex justify-center items-center mx-1 w-10 h-10"
-                      >
-                        i
-                      </a>
-                      <a
-                        href="#"
-                        className="border border-gray-300 rounded-xl flex justify-center items-center mx-1 w-10 h-10"
-                      >
-                        i
-                      </a>
-                      <a
-                        href="#"
-                        className="border border-gray-300 rounded-xl flex justify-center items-center mx-1 w-10 h-10"
-                      >
-                        i
-                      </a>
-                    </div>
                     <span className="text-sm">ou use email e senha</span>
                     <input
                       className="bg-gray border-none my-2 py-2 px-3 text-sm rounded-lg w-full outline-none"
                       type="email"
+                      name="email"
                       placeholder="Email de login"
-                      aria-label="Email de login"
+                      value={formData.email}
+                      onChange={handleChange}
                     />
                     <input
                       className="bg-gray border-none my-2 py-2 px-3 text-sm rounded-lg w-full outline-none"
                       type="password"
+                      name="password"
                       placeholder="Senha de login"
-                      aria-label="Senha de login"
+                      value={formData.password}
+                      onChange={handleChange}
                     />
                     <a href="#" className="text-sm text-blue-400">
                       Esqueceu sua senha?
                     </a>
                     <button
                       type="submit"
-                      className="bg-transparent border border-gray text-black text-sm font-semibold  px-4 py-2 rounded-lg mt-4"
+                      className="bg-transparent border border-gray text-black text-sm font-semibold px-4 py-2 rounded-lg mt-4"
                       aria-label="Submit Login"
                     >
                       Login
@@ -157,20 +145,18 @@ export default function Login() {
                   </form>
                 )}
               </div>
+
+              {/* Transição entre Login e Cadastro */}
               <div
-                className={`absolute top-0 ${active === 'cadastrar' ? 'left-0 rounded-r-[30%]' : 'rounded-l-[30%] left-1/2 '}  w-1/2 h-full overflow-hidden transition-all duration-600 ease-in-out z-50`}
+                className={`absolute top-0 ${active === 'cadastrar' ? 'left-0 rounded-r-[30%]' : 'rounded-l-[30%] left-1/2'} w-1/2 h-full overflow-hidden transition-all duration-600 ease-in-out z-50`}
               >
                 <div
                   className={`bg-gradient-to-r left-0 
-                  ${
-                    active === 'cadastrar'
-                      ? 'from-blue-700 to-blue-400'
-                      : 'from-blue-400 to-blue-700'
-                  }
+                  ${active === 'cadastrar' ? 'from-blue-700 to-blue-400' : 'from-blue-400 to-blue-700'}
                       text-white relative right-0 w-full h-full transform transition-all duration-600 ease-in-out`}
                 >
                   <div
-                    className={`${active === 'cadastrar' ? 'hidden' : ''}  flex items-center justify-center flex-col h-full  w-full `}
+                    className={`${active === 'cadastrar' ? 'hidden' : ''} flex items-center justify-center flex-col h-full w-full`}
                   >
                     <h1 className="text-3xl font-bold mb-4">Bem vindo de volta!</h1>
                     <p className="text-sm leading-5 tracking-tight my-5">
@@ -183,9 +169,7 @@ export default function Login() {
                       <button
                         data-testid="cadastro-toggle"
                         className="border rounded-xl p-2 px-6"
-                        onClick={() => {
-                          setActive('cadastrar');
-                        }}
+                        onClick={() => setActive('cadastrar')}
                         aria-label="Cadastrar"
                       >
                         Cadastrar
@@ -193,9 +177,9 @@ export default function Login() {
                     </div>
                   </div>
                   <div
-                    className={`${active === 'login' ? 'hidden' : ''} flex items-center justify-center flex-col h-full w-full `}
+                    className={`${active === 'login' ? 'hidden' : ''} flex items-center justify-center flex-col h-full w-full`}
                   >
-                    <h1 className="text-3xl font-bold mb-4">Seja bem vindo!</h1>
+                    <h1 className="text-3xl font-bold mb-4">Seja bem-vindo!</h1>
                     <p className="text-sm leading-5 tracking-tight my-5">
                       Faça o registro para continuar
                     </p>
@@ -205,9 +189,7 @@ export default function Login() {
                       </p>
                       <button
                         className="border rounded-xl p-2 px-6"
-                        onClick={() => {
-                          setActive('login');
-                        }}
+                        onClick={() => setActive('login')}
                         aria-label="Fazer Login"
                       >
                         Fazer Login
