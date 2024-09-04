@@ -7,4 +7,5 @@ export interface Post {
   authorId: string;
   author: User;
   createdAt: Date;
+  images: File[];
 }

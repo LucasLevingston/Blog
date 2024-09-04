@@ -40,6 +40,7 @@ export const getAllPosts = async (
   const user = request.user;
   try {
     const posts = await getAllPostsService(order, user ? user.userId : null);
+    console.log(order);
     reply.status(200).send(posts);
   } catch (error) {
     reply.status(500).send(error);

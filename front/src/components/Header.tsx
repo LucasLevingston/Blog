@@ -18,7 +18,7 @@ export default function Header() {
   const user = useUser((state) => state.user);
   const { clearUser } = useUser();
   return (
-    <div className="min-w-[50%] flex justify-between items-center h-32 border-b-2 border-gray bg-blue-500 p-5 text-left text-mainTextColor">
+    <div className="min-w-[50%] flex justify-between px-16 items-center h-32 border-b-2 border-gray bg-blue-500 p-5 text-left text-mainTextColor">
       <p className="font-saira-stencil text-5xl">
         Soft<span className="text-white">Blog</span>
       </p>

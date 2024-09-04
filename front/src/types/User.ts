@@ -11,5 +11,5 @@ export interface User {
   id: string;
   username: string;
   email: string;
-  posts: Post[];
+  posts?: Post[];
 }

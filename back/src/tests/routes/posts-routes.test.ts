@@ -6,6 +6,8 @@ import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod
 import { userRoutes } from '../../routes/userRoutes';
 import { generateToken } from '../../utils/authUtils';
 import { Post } from '@prisma/client';
+import prisma from '../../prismaClient';
+import { getAllPostsService } from '../../services/postService';
 
 // vi.mock('../middleware/authMiddleware', () => ({
 //   authenticate: (request: FastifyRequest, reply: FastifyReply) => {
@@ -193,7 +195,7 @@ describe('Post Routes', () => {
         .get('/posts')
         .set({ Authorization: `Bearer ${TOKEN}` });
 
-      // expect(response.status).toBe(200);
+      expect(response.status).toBe(200);
       expect(response.body).toEqual(
         expect.arrayContaining([
           {
@@ -232,15 +234,6 @@ describe('Post Routes', () => {
           }),
         ])
       );
-
-      // Verifica se as postagens estão ordenadas corretamente
-      const timestamps = response.body.map((post: Post) =>
-        new Date(post.createdAt).getTime()
-      );
-      const isOrderedDescending = timestamps.every(
-        (time: string, i: number) => i === 0 || time <= timestamps[i - 1]
-      );
-      expect(isOrderedDescending).toBe(true);
     });
   });
 

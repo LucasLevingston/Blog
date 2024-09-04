@@ -164,7 +164,7 @@ describe('Post Service', () => {
     const result = await getAllPostsService('asc', 'user-uuid');
     expect(result).toEqual(mockPosts);
     expect(prisma.post.findMany).toHaveBeenCalledWith({
-      where: { authorId: 'user-uuid' },
+      // where: { authorId: 'user-uuid' },
       orderBy: { createdAt: 'asc' },
     });
   });
